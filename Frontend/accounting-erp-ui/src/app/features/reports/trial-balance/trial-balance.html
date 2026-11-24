@@ -1,0 +1,99 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.trialBalance') }}</h1>
+      <p>{{ langService.isRtl() ? 'تقرير ميزان المراجعة بالأرصدة والمجاميع' : 'Financial Trial Balance by Balances and Totals' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button color="accent" (click)="exportToExcel()" [disabled]="!report()">
+        <mat-icon>file_download</mat-icon>
+        <span>{{ langService.isRtl() ? 'تصدير إكسل (Excel)' : 'Export Excel' }}</span>
+      </button>
+      <button mat-flat-button color="primary" (click)="loadTrialBalance()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث التقرير' : 'Run Report' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div class="report-filters">
+      <div class="date-inputs">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.isRtl() ? 'من تاريخ' : 'From Date' }}</mat-label>
+          <input matInput type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.isRtl() ? 'إلى تاريخ' : 'To Date' }}</mat-label>
+          <input matInput type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)">
+        </mat-form-field>
+      </div>
+
+      <div class="balance-indicator" *ngIf="report()" [class.balanced]="report()?.isBalanced" [class.unbalanced]="!report()?.isBalanced">
+        <mat-icon>{{ report()?.isBalanced ? 'verified' : 'error' }}</mat-icon>
+        <span>
+          {{ report()?.isBalanced 
+            ? (langService.isRtl() ? 'الميزان متطابق وموزون محاسبياً' : 'Trial Balance is Mathematically Balanced') 
+            : (langService.isRtl() ? 'الميزان غير متطابق! يوجد فارق' : 'Trial Balance Discrepancy Detected') 
+          }}
+        </span>
+      </div>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <!-- Trial Balance Table -->
+    <div class="erp-table-container" *ngIf="!isLoading() && report()">
+      <table>
+        <thead>
+          <tr>
+            <th rowspan="2">{{ langService.translate('gl.accountCode') }}</th>
+            <th rowspan="2">{{ langService.translate('gl.accountName') }}</th>
+            <th colspan="2" class="header-group">{{ langService.isRtl() ? 'الرصيد الافتتاحي' : 'Opening Balance' }}</th>
+            <th colspan="2" class="header-group">{{ langService.isRtl() ? 'حركة الفترة' : 'Period Activity' }}</th>
+            <th colspan="2" class="header-group">{{ langService.isRtl() ? 'رصيد الإغلاق' : 'Ending Balance' }}</th>
+          </tr>
+          <tr class="sub-header-row">
+            <th class="numeric-cell">{{ langService.translate('gl.debit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.credit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.debit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.credit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.debit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.credit') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of report()?.items">
+            <td><code>{{ item.accountCode }}</code></td>
+            <td><strong>{{ langService.isRtl() ? item.accountNameAr : item.accountNameEn }}</strong></td>
+            <td class="numeric-cell">{{ item.openingDebit | number:'1.2-2' }}</td>
+            <td class="numeric-cell">{{ item.openingCredit | number:'1.2-2' }}</td>
+            <td class="numeric-cell">{{ item.periodDebit | number:'1.2-2' }}</td>
+            <td class="numeric-cell">{{ item.periodCredit | number:'1.2-2' }}</td>
+            <td class="numeric-cell"><strong>{{ item.endingDebit | number:'1.2-2' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ item.endingCredit | number:'1.2-2' }}</strong></td>
+          </tr>
+          <tr *ngIf="!report()?.items || report()?.items?.length === 0">
+            <td colspan="8" class="no-data-cell">
+              {{ langService.translate('common.noData') }}
+            </td>
+          </tr>
+        </tbody>
+        <tfoot *ngIf="report()">
+          <tr class="grand-totals-row">
+            <td colspan="2"><strong>{{ langService.isRtl() ? 'الإجمالي العام' : 'Grand Totals' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ report()?.totalOpeningDebit | number:'1.2-2' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ report()?.totalOpeningCredit | number:'1.2-2' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ report()?.totalPeriodDebit | number:'1.2-2' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ report()?.totalPeriodCredit | number:'1.2-2' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ report()?.totalEndingDebit | number:'1.2-2' }}</strong></td>
+            <td class="numeric-cell"><strong>{{ report()?.totalEndingCredit | number:'1.2-2' }}</strong></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,122 @@
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.user-card {
+  text-align: center;
+  padding: 30px;
+
+  .avatar-circle {
+    width: 72px;
+    height: 72px;
+    background-color: #2563eb;
+    color: #ffffff;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+
+    mat-icon {
+      font-size: 40px;
+      height: 40px;
+      width: 40px;
+    }
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 1.25rem;
+  }
+
+  .user-email {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin: 4px 0 12px 0;
+  }
+}
+
+.roles-wrap {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  .role-badge {
+    background-color: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #1e3a8a;
+    padding: 2px 10px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+}
+
+.companies-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+
+  .company-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+
+    mat-icon {
+      color: #3b82f6;
+    }
+
+    .company-details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      small {
+        color: var(--text-secondary);
+      }
+    }
+  }
+}
+
+.permissions-card {
+  grid-column: 1 / -1;
+
+  .permissions-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+
+    .perm-chip {
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #334155;
+
+      mat-icon {
+        font-size: 16px;
+        height: 16px;
+        width: 16px;
+        color: #059669;
+      }
+    }
+  }
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}

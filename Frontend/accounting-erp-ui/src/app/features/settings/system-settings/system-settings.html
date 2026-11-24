@@ -1,0 +1,92 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.systemSettings') }}</h1>
+      <p>{{ langService.isRtl() ? 'إعدادات الضرائب، العملات وأسعار الصرف، والشركات' : 'Configure Taxes, Currencies, Exchange Rates & Company Parameters' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="loadSettings()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث' : 'Refresh' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <mat-tab-group *ngIf="!isLoading()" animationDuration="0ms">
+      <!-- Taxes Tab -->
+      <mat-tab [label]="langService.isRtl() ? 'إعدادات الضرائب (VAT)' : 'Tax Schedules'">
+        <div class="tab-body">
+          <div class="erp-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>رمز الضريبة</th>
+                  <th>اسم الضريبة</th>
+                  <th>التصنيف</th>
+                  <th class="numeric-cell">النسبة الحالية</th>
+                  <th>الحالة</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let t of taxes()">
+                  <td><code>{{ t.code }}</code></td>
+                  <td><strong>{{ langService.isRtl() ? t.nameAr : t.nameEn }}</strong></td>
+                  <td>{{ t.taxCategory }}</td>
+                  <td class="numeric-cell"><strong>{{ t.currentRate }}%</strong></td>
+                  <td>
+                    <span class="status-badge" [class.active]="t.isActive" [class.inactive]="!t.isActive">
+                      {{ t.isActive ? (langService.isRtl() ? 'فعّالة' : 'Active') : (langService.isRtl() ? 'معطلة' : 'Inactive') }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="taxes().length === 0">
+                  <td colspan="5" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Currencies Tab -->
+      <mat-tab [label]="langService.isRtl() ? 'العملات وأسعار الصرف' : 'Currencies & Rates'">
+        <div class="tab-body">
+          <div class="erp-table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>رمز العملة</th>
+                  <th>اسم العملة</th>
+                  <th>الرمز المختصر</th>
+                  <th class="numeric-cell">سعر الصرف مقابل الأساس</th>
+                  <th>العملة الأساسية</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let c of currencies()">
+                  <td><code>{{ c.code }}</code></td>
+                  <td><strong>{{ langService.isRtl() ? c.nameAr : c.nameEn }}</strong></td>
+                  <td>{{ c.symbol }}</td>
+                  <td class="numeric-cell"><strong>{{ c.exchangeRateToBase | number:'1.2-4' }}</strong></td>
+                  <td>
+                    <span class="status-badge" [class.posted]="c.isBaseCurrency" [class.draft]="!c.isBaseCurrency">
+                      {{ c.isBaseCurrency ? (langService.isRtl() ? 'نعم (عملة أساسية)' : 'Base Currency') : (langService.isRtl() ? 'عملة فرعية' : 'Secondary') }}
+                    </span>
+                  </td>
+                </tr>
+                <tr *ngIf="currencies().length === 0">
+                  <td colspan="5" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

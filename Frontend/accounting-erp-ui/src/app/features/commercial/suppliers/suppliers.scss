@@ -1,0 +1,29 @@
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.form-buttons {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.alt-name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.no-data-cell {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px;
+}

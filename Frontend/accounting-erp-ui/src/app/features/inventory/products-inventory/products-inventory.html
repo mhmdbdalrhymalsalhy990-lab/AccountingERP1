@@ -1,0 +1,57 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.inventory') }}</h1>
+      <p>{{ langService.isRtl() ? 'دليل الأصناف والمخزون وحساب متوسط التكلفة المرجح WAC' : 'Products, Stock on Hand & Moving Weighted Average Cost (WAC)' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="loadProducts()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث' : 'Refresh' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ langService.translate('inventory.sku') }}</th>
+            <th>{{ langService.translate('inventory.products') }}</th>
+            <th>{{ langService.translate('inventory.unit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('inventory.stock') }}</th>
+            <th class="numeric-cell">{{ langService.translate('inventory.costPrice') }}</th>
+            <th class="numeric-cell">{{ langService.translate('inventory.sellingPrice') }}</th>
+            <th>{{ langService.translate('gl.status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of products()">
+            <td><code>{{ p.itemCode }}</code></td>
+            <td>
+              <strong>{{ langService.isRtl() ? p.nameAr : p.nameEn }}</strong>
+              <div class="alt-name">{{ langService.isRtl() ? p.nameEn : p.nameAr }}</div>
+            </td>
+            <td>{{ p.unitName }}</td>
+            <td class="numeric-cell"><strong>{{ p.currentStock | number:'1.0-2' }}</strong></td>
+            <td class="numeric-cell">{{ p.averageCost | number:'1.2-2' }}</td>
+            <td class="numeric-cell"><strong>{{ p.sellingPrice | number:'1.2-2' }}</strong></td>
+            <td>
+              <span class="status-badge" [class.active]="p.isActive" [class.inactive]="!p.isActive">
+                {{ p.isActive ? (langService.isRtl() ? 'نشط' : 'Active') : (langService.isRtl() ? 'معطل' : 'Inactive') }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="products().length === 0">
+            <td colspan="7" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

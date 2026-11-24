@@ -1,0 +1,56 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.banking') }}</h1>
+      <p>{{ langService.isRtl() ? 'إدارة الحسابات البنكية والخزائن وحساب الأرصدة الدفترية اللحظية' : 'Manage Bank & Cash Treasury Accounts with Real-time Book Balances' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="loadBankAccounts()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث' : 'Refresh' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ langService.translate('banking.accountNumber') }}</th>
+            <th>{{ langService.translate('banking.bankName') }}</th>
+            <th>النوع</th>
+            <th>IBAN</th>
+            <th class="numeric-cell">{{ langService.translate('banking.bookBalance') }}</th>
+            <th>{{ langService.translate('gl.status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let acc of accounts()">
+            <td><code>{{ acc.accountNumber }}</code></td>
+            <td><strong>{{ acc.bankName }}</strong></td>
+            <td>
+              <span class="type-pill" [class.cash]="acc.isCash" [class.bank]="!acc.isCash">
+                {{ acc.isCash ? (langService.isRtl() ? 'خزينة نقدية' : 'Cash') : (langService.isRtl() ? 'حساب بنكي' : 'Bank') }}
+              </span>
+            </td>
+            <td>{{ acc.iban || '-' }}</td>
+            <td class="numeric-cell"><strong>{{ acc.bookBalance | number:'1.2-2' }}</strong></td>
+            <td>
+              <span class="status-badge" [class.active]="acc.isActive" [class.inactive]="!acc.isActive">
+                {{ acc.isActive ? (langService.isRtl() ? 'نشط' : 'Active') : (langService.isRtl() ? 'معطل' : 'Inactive') }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="accounts().length === 0">
+            <td colspan="6" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

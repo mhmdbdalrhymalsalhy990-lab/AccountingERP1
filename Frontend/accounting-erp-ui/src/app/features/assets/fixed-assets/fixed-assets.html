@@ -1,0 +1,68 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.fixedAssets') }}</h1>
+      <p>{{ langService.isRtl() ? 'سجل الأصول الثابتة وحساب الإهلاك الخطي الآلي والترحيل للأستاذ العام' : 'Fixed Assets Register & Automated Straight-Line Depreciation Engine' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="loadAssets()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث' : 'Refresh' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ langService.translate('assets.assetCode') }}</th>
+            <th>{{ langService.translate('assets.assetName') }}</th>
+            <th>التصنيف</th>
+            <th class="numeric-cell">{{ langService.translate('assets.acquisitionCost') }}</th>
+            <th class="numeric-cell">{{ langService.translate('assets.accumulatedDepreciation') }}</th>
+            <th class="numeric-cell">{{ langService.translate('assets.bookValue') }}</th>
+            <th>{{ langService.translate('gl.status') }}</th>
+            <th>{{ langService.translate('common.actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let a of assets()">
+            <td><code>{{ a.assetCode }}</code></td>
+            <td>
+              <strong>{{ langService.isRtl() ? a.nameAr : a.nameEn }}</strong>
+              <div class="alt-name">{{ langService.isRtl() ? a.nameEn : a.nameAr }}</div>
+            </td>
+            <td>{{ a.assetCategory }}</td>
+            <td class="numeric-cell">{{ a.acquisitionCost | number:'1.2-2' }}</td>
+            <td class="numeric-cell">{{ a.accumulatedDepreciation | number:'1.2-2' }}</td>
+            <td class="numeric-cell"><strong>{{ a.bookValue | number:'1.2-2' }}</strong></td>
+            <td>
+              <span class="status-badge" [class.posted]="a.status === 'Active'" [class.draft]="a.status !== 'Active'">
+                {{ a.status }}
+              </span>
+            </td>
+            <td>
+              <button 
+                mat-stroked-button 
+                color="primary" 
+                class="action-btn"
+                (click)="runDepreciation(a)">
+                <mat-icon>calculate</mat-icon>
+                <span>{{ langService.translate('assets.depreciate') }}</span>
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="assets().length === 0">
+            <td colspan="8" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

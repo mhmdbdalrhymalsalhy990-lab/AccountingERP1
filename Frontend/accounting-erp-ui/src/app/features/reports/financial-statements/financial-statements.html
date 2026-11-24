@@ -1,0 +1,103 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.financialReports') }}</h1>
+      <p>{{ langService.isRtl() ? 'القوائم المالية الختامية: قائمة الدخل (الأرباح والخسائر) والميزانية العمومية' : 'Financial Statements: Income Statement (P&L) and Balance Sheet' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button color="primary" (click)="loadReports()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث القوائم' : 'Refresh Statements' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <mat-tab-group *ngIf="!isLoading()" animationDuration="0ms">
+      <!-- Income Statement Tab -->
+      <mat-tab [label]="langService.isRtl() ? 'قائمة الدخل (الأرباح والخسائر)' : 'Income Statement (P&L)'">
+        <div class="statement-content" *ngIf="incomeStatement()">
+          <div class="statement-header-box">
+            <h2>{{ incomeStatement()?.companyName }}</h2>
+            <p>{{ langService.isRtl() ? 'قائمة الدخل للفترة المالية الحالية' : 'Income Statement for Current Fiscal Period' }}</p>
+          </div>
+
+          <div class="statement-table-wrapper">
+            <table class="report-table">
+              <tbody>
+                <tr class="section-row">
+                  <td><strong>{{ langService.isRtl() ? 'الإيرادات التشغيلية' : 'Operating Revenue' }}</strong></td>
+                  <td class="numeric-cell"><strong>{{ incomeStatement()?.totalRevenue | number:'1.2-2' }}</strong></td>
+                </tr>
+                <tr>
+                  <td class="indent-cell">{{ langService.isRtl() ? 'تكلفة البضاعة المباعة (COGS)' : 'Cost of Goods Sold' }}</td>
+                  <td class="numeric-cell">({{ incomeStatement()?.costOfGoodsSold | number:'1.2-2' }})</td>
+                </tr>
+                <tr class="subtotal-row">
+                  <td><strong>{{ langService.isRtl() ? 'إجمالي الربح (Gross Profit)' : 'Gross Profit' }}</strong></td>
+                  <td class="numeric-cell"><strong>{{ incomeStatement()?.grossProfit | number:'1.2-2' }}</strong></td>
+                </tr>
+                <tr class="section-row">
+                  <td><strong>{{ langService.isRtl() ? 'المصروفات التشغيلية والإدارية' : 'Operating Expenses' }}</strong></td>
+                  <td class="numeric-cell">({{ incomeStatement()?.operatingExpenses | number:'1.2-2' }})</td>
+                </tr>
+                <tr class="grand-total-row">
+                  <td><strong>{{ langService.isRtl() ? 'صافي الدخل / الربح (Net Income)' : 'Net Income' }}</strong></td>
+                  <td class="numeric-cell">
+                    <span class="net-income-highlight">
+                      <strong>{{ incomeStatement()?.netIncome | number:'1.2-2' }}</strong>
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </mat-tab>
+
+      <!-- Balance Sheet Tab -->
+      <mat-tab [label]="langService.isRtl() ? 'قائمة المركز المالي (الميزانية العمومية)' : 'Balance Sheet'">
+        <div class="statement-content" *ngIf="balanceSheet()">
+          <div class="statement-header-box">
+            <h2>{{ balanceSheet()?.companyName }}</h2>
+            <p>{{ langService.isRtl() ? 'قائمة المركز المالي كما في ' + balanceSheet()?.asOfDate : 'Statement of Financial Position as of ' + balanceSheet()?.asOfDate }}</p>
+          </div>
+
+          <div class="statement-table-wrapper">
+            <table class="report-table">
+              <tbody>
+                <tr class="section-row">
+                  <td><strong>{{ langService.isRtl() ? 'إجمالي الأصول (Total Assets)' : 'Total Assets' }}</strong></td>
+                  <td class="numeric-cell"><strong>{{ balanceSheet()?.totalAssets | number:'1.2-2' }}</strong></td>
+                </tr>
+                <tr class="section-row">
+                  <td><strong>{{ langService.isRtl() ? 'إجمالي الالتزامات (Total Liabilities)' : 'Total Liabilities' }}</strong></td>
+                  <td class="numeric-cell"><strong>{{ balanceSheet()?.totalLiabilities | number:'1.2-2' }}</strong></td>
+                </tr>
+                <tr class="section-row">
+                  <td><strong>{{ langService.isRtl() ? 'إجمالي حقوق الملكية (Total Equity)' : 'Total Equity' }}</strong></td>
+                  <td class="numeric-cell"><strong>{{ balanceSheet()?.totalEquity | number:'1.2-2' }}</strong></td>
+                </tr>
+                <tr class="grand-total-row">
+                  <td><strong>{{ langService.isRtl() ? 'مجموع الالتزامات وحقوق الملكية' : 'Total Liabilities & Equity' }}</strong></td>
+                  <td class="numeric-cell">
+                    <strong>{{ ((balanceSheet()?.totalLiabilities || 0) + (balanceSheet()?.totalEquity || 0)) | number:'1.2-2' }}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="balance-badge" [class.balanced]="balanceSheet()?.isBalanced">
+              <mat-icon>{{ balanceSheet()?.isBalanced ? 'verified' : 'warning' }}</mat-icon>
+              <span>{{ balanceSheet()?.isBalanced ? (langService.isRtl() ? 'المعادلة المحاسبية متوازنة: الأصول = الالتزامات + حقوق الملكية' : 'Accounting Equation Balanced: Assets = Liabilities + Equity') : 'Unbalanced' }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
+  </div>
+</div>

@@ -1,0 +1,270 @@
+<div class="erp-container">
+  <app-page-header 
+    [title]="langService.translate('nav.chartOfAccounts')" 
+    [subtitle]="langService.isRtl() ? 'دليل وشجرة الحسابات المالية الهرمية المتكاملة للشركة' : 'Hierarchical Chart & Tree of Financial Accounts'">
+    <div class="header-buttons">
+      <button mat-stroked-button color="primary" (click)="loadAccounts()" [disabled]="isLoading()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'تحديث' : 'Refresh' }}</span>
+      </button>
+      <button mat-flat-button color="primary" (click)="toggleNewAccount()">
+        <mat-icon>{{ showNewAccountForm() ? 'close' : 'add' }}</mat-icon>
+        <span>{{ showNewAccountForm() ? (langService.isRtl() ? 'إلغاء' : 'Cancel') : (langService.isRtl() ? 'إضافة حساب جديد' : 'New Account') }}</span>
+      </button>
+    </div>
+  </app-page-header>
+
+  <!-- Create New Account Collapsible Form Card -->
+  <div class="erp-card new-account-card" *ngIf="showNewAccountForm()">
+    <div class="card-header-bar">
+      <div class="header-title">
+        <mat-icon class="title-icon">account_tree</mat-icon>
+        <div>
+          <h3>{{ langService.isRtl() ? 'إضافة حساب مالي جديد إلى الدليل' : 'Add New Account to Chart' }}</h3>
+          <p>{{ langService.isRtl() ? 'حدد الحساب الأب لتوليد الرمز تلقائياً وتوريث الخصائص المالية' : 'Select parent account to inherit properties and auto-generate code' }}</p>
+        </div>
+      </div>
+      <button mat-icon-button (click)="toggleNewAccount()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <form [formGroup]="newAccountForm" (ngSubmit)="onSubmitNewAccount()" class="new-account-form">
+      <div class="form-grid">
+        <!-- Parent Account -->
+        <mat-form-field appearance="outline" class="col-span-2">
+          <mat-label>{{ langService.isRtl() ? 'الحساب الأب (المستوى الأعلى)' : 'Parent Account (Header)' }}</mat-label>
+          <mat-select formControlName="parentAccountId" (selectionChange)="onParentChange($event.value)">
+            <mat-option value="">{{ langService.isRtl() ? '-- بدون حساب أب (حساب رئيسي مستوى أول) --' : '-- No Parent (Root Level 1) --' }}</mat-option>
+            <mat-option *ngFor="let h of headerAccounts()" [value]="h.id">
+              {{ h.code }} - {{ langService.isRtl() ? h.nameAr : h.nameEn }} (L{{ h.level }})
+            </mat-option>
+          </mat-select>
+          <mat-hint>{{ langService.isRtl() ? 'اختر حساباً رئيسياً لتفريعه تلقائياً' : 'Select a summary account to create child under it' }}</mat-hint>
+        </mat-form-field>
+
+        <!-- Account Code -->
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.translate('gl.accountCode') }}</mat-label>
+          <input matInput formControlName="accountCode" placeholder="مثال: 110103">
+          <mat-icon matPrefix>tag</mat-icon>
+          <mat-hint>{{ langService.isRtl() ? 'يُقترح تلقائياً بناءً على الأب' : 'Auto-suggested' }}</mat-hint>
+        </mat-form-field>
+
+        <!-- Posting Status -->
+        <div class="checkbox-field">
+          <mat-checkbox formControlName="isPosting" color="primary">
+            <span class="checkbox-label">
+              <strong>{{ langService.isRtl() ? 'حساب فرعي يقبل الترحيل (Posting)' : 'Posting Account (Accepts Entries)' }}</strong>
+              <small>{{ langService.isRtl() ? 'حدد هذا الخيار لتمكين استخدامه في القيود والفواتير' : 'Check to allow selection in journal entries and invoices' }}</small>
+            </span>
+          </mat-checkbox>
+        </div>
+
+        <!-- Name Ar -->
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.isRtl() ? 'اسم الحساب بالعربية' : 'Account Name (Arabic)' }} *</mat-label>
+          <input matInput formControlName="nameAr" placeholder="مثال: صندوق العهدة النقدية">
+          <mat-icon matPrefix>edit</mat-icon>
+        </mat-form-field>
+
+        <!-- Name En -->
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.isRtl() ? 'اسم الحساب بالإنجليزية' : 'Account Name (English)' }}</mat-label>
+          <input matInput formControlName="nameEn" placeholder="e.g. Petty Cash Fund">
+          <mat-icon matPrefix>translate</mat-icon>
+        </mat-form-field>
+
+        <!-- Account Type (for Root accounts) -->
+        <mat-form-field appearance="outline" *ngIf="!newAccountForm.get('parentAccountId')?.value">
+          <mat-label>{{ langService.translate('gl.accountType') }}</mat-label>
+          <mat-select formControlName="accountType">
+            <mat-option value="Asset">{{ langService.isRtl() ? 'أصول (Assets)' : 'Assets' }}</mat-option>
+            <mat-option value="Liability">{{ langService.isRtl() ? 'التزامات (Liabilities)' : 'Liabilities' }}</mat-option>
+            <mat-option value="Equity">{{ langService.isRtl() ? 'حقوق ملكية (Equity)' : 'Equity' }}</mat-option>
+            <mat-option value="Revenue">{{ langService.isRtl() ? 'إيرادات (Revenue)' : 'Revenue' }}</mat-option>
+            <mat-option value="Expense">{{ langService.isRtl() ? 'مصروفات (Expense)' : 'Expense' }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Nature (for Root accounts) -->
+        <mat-form-field appearance="outline" *ngIf="!newAccountForm.get('parentAccountId')?.value">
+          <mat-label>{{ langService.isRtl() ? 'طبيعة الحساب' : 'Account Nature' }}</mat-label>
+          <mat-select formControlName="nature">
+            <mat-option value="Debit">{{ langService.isRtl() ? 'مدين (Debit)' : 'Debit' }}</mat-option>
+            <mat-option value="Credit">{{ langService.isRtl() ? 'دائن (Credit)' : 'Credit' }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <div class="form-actions-row">
+        <button mat-button type="button" (click)="toggleNewAccount()">
+          {{ langService.isRtl() ? 'إلغاء' : 'Cancel' }}
+        </button>
+        <button mat-flat-button color="primary" type="submit" [disabled]="newAccountForm.invalid || isSubmitting()">
+          <mat-spinner diameter="18" *ngIf="isSubmitting()"></mat-spinner>
+          <mat-icon *ngIf="!isSubmitting()">save</mat-icon>
+          <span *ngIf="!isSubmitting()">{{ langService.isRtl() ? 'حفظ الحساب' : 'Save Account' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Main Content Card -->
+  <div class="erp-card">
+    <!-- Filter Toolbar -->
+    <div class="filter-toolbar">
+      <div class="search-and-counter">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>{{ langService.translate('common.search') }}</mat-label>
+          <input matInput [ngModel]="searchTerm()" (ngModelChange)="searchTerm.set($event)" placeholder="ابحث برمز أو اسم الحساب...">
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+
+        <div class="account-counter">
+          {{ langService.isRtl() ? 'إجمالي الحسابات المعروضة: ' : 'Showing Accounts: ' }}
+          <strong>{{ filteredAccounts().length }}</strong>
+          <span class="total-badge">{{ langService.isRtl() ? 'من أصل ' + accounts().length : 'of ' + accounts().length }}</span>
+        </div>
+      </div>
+
+      <!-- Quick Category Chips -->
+      <div class="type-filter-chips">
+        <button 
+          mat-stroked-button 
+          *ngFor="let t of accountTypesList"
+          [class.active-chip]="selectedType() === t.value"
+          (click)="selectedType.set(t.value)"
+          class="type-btn">
+          {{ langService.isRtl() ? t.labelAr : t.labelEn }}
+        </button>
+      </div>
+
+      <!-- Posting Filter Toggle -->
+      <div class="posting-filter-toggle">
+        <button 
+          mat-button 
+          [class.active-post]="selectedPostingFilter() === 'all'" 
+          (click)="selectedPostingFilter.set('all')">
+          {{ langService.isRtl() ? 'الكل' : 'All' }}
+        </button>
+        <button 
+          mat-button 
+          [class.active-post]="selectedPostingFilter() === 'header'" 
+          (click)="selectedPostingFilter.set('header')">
+          <mat-icon>folder</mat-icon>
+          <span>{{ langService.isRtl() ? 'رئيسية فقط' : 'Headers' }}</span>
+        </button>
+        <button 
+          mat-button 
+          [class.active-post]="selectedPostingFilter() === 'posting'" 
+          (click)="selectedPostingFilter.set('posting')">
+          <mat-icon>receipt</mat-icon>
+          <span>{{ langService.isRtl() ? 'فرعية للترحيل' : 'Posting' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <!-- Accounts Data Table -->
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table class="erp-accounts-table">
+        <thead>
+          <tr>
+            <th style="width: 25%">{{ langService.translate('gl.accountCode') }}</th>
+            <th style="width: 30%">{{ langService.translate('gl.accountName') }}</th>
+            <th style="width: 12%">{{ langService.translate('gl.accountType') }}</th>
+            <th style="width: 8%">{{ langService.translate('gl.level') }}</th>
+            <th style="width: 10%">{{ langService.translate('gl.isPosting') }}</th>
+            <th style="width: 15%" class="action-cell-header">{{ langService.isRtl() ? 'الإجراءات' : 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let acc of filteredAccounts()" [class.parent-row]="!acc.isPosting" [class.inactive-row]="!acc.isActive">
+            <!-- Account Code with Tree indentation -->
+            <td>
+              <div class="account-code-cell" [style.margin-inline-start.px]="(acc.level - 1) * 20">
+                <span class="level-indicator" [class.posting-ind]="acc.isPosting">
+                  <mat-icon class="tree-icon header-icon" *ngIf="!acc.isPosting">folder_open</mat-icon>
+                  <mat-icon class="tree-icon posting-icon" *ngIf="acc.isPosting">article</mat-icon>
+                </span>
+                <span class="code-mono">{{ acc.code }}</span>
+              </div>
+            </td>
+
+            <!-- Account Name -->
+            <td>
+              <div class="account-name-block">
+                <strong class="primary-name">{{ langService.isRtl() ? acc.nameAr : acc.nameEn }}</strong>
+                <span class="secondary-name">{{ langService.isRtl() ? acc.nameEn : acc.nameAr }}</span>
+              </div>
+            </td>
+
+            <!-- Account Type -->
+            <td>
+              <span class="type-pill" [ngClass]="getAccountTypeClass(acc.accountType)">
+                {{ getAccountTypeLabel(acc.accountType) }}
+              </span>
+            </td>
+
+            <!-- Level -->
+            <td>
+              <span class="level-badge" [class.level-root]="acc.level === 1">L{{ acc.level }}</span>
+            </td>
+
+            <!-- Posting / Header -->
+            <td>
+              <span class="posting-badge" [class.is-post]="acc.isPosting" [class.is-head]="!acc.isPosting">
+                {{ acc.isPosting ? (langService.isRtl() ? 'فرعي (ترحيل)' : 'Posting') : (langService.isRtl() ? 'رئيسي (تجميعي)' : 'Summary') }}
+              </span>
+            </td>
+
+            <!-- Actions -->
+            <td class="action-buttons-cell">
+              <!-- Add Child Account -->
+              <button 
+                mat-icon-button 
+                color="primary" 
+                *ngIf="!acc.isPosting || acc.level < 4" 
+                (click)="openAddChildAccount(acc)" 
+                [matTooltip]="langService.isRtl() ? 'تفريع حساب جديد تحت هذا الحساب' : 'Add child account under this'">
+                <mat-icon>add_circle_outline</mat-icon>
+              </button>
+
+              <!-- Toggle Status -->
+              <button 
+                mat-icon-button 
+                [color]="acc.isActive ? 'accent' : 'warn'"
+                (click)="toggleAccountStatus(acc)"
+                [matTooltip]="acc.isActive ? (langService.isRtl() ? 'تعطيل الحساب' : 'Deactivate') : (langService.isRtl() ? 'تفعيل الحساب' : 'Activate')">
+                <mat-icon>{{ acc.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+              </button>
+
+              <!-- Delete Leaf Account -->
+              <button 
+                mat-icon-button 
+                color="warn" 
+                (click)="deleteAccount(acc)"
+                [matTooltip]="langService.isRtl() ? 'حذف الحساب' : 'Delete Account'">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="filteredAccounts().length === 0">
+            <td colspan="6" class="no-data-cell">
+              <mat-icon class="no-data-icon">search_off</mat-icon>
+              <h4>{{ langService.isRtl() ? 'لم يتم العثور على حسابات مطابقة لمعايير البحث' : 'No matching accounts found' }}</h4>
+              <p>{{ langService.isRtl() ? 'جرب البحث بكلمات أخرى أو اختر نوع حساب مختلف' : 'Try searching with different terms or reset filters' }}</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

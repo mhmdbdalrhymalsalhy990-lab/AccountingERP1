@@ -1,0 +1,424 @@
+<div class="erp-container">
+  <app-page-header 
+    [title]="langService.translate('nav.journalEntries')" 
+    [subtitle]="langService.isRtl() ? 'سجل القيود المحاسبية اليومية المزدوجة المتسلسلة' : 'Sequential Double-Entry Journal Records'">
+    <button mat-flat-button color="primary" (click)="toggleNewEntry()">
+      <mat-icon>{{ showNewEntryForm() ? 'close' : 'add' }}</mat-icon>
+      <span>{{ showNewEntryForm() ? langService.translate('gl.cancel') : langService.translate('gl.newEntry') }}</span>
+    </button>
+  </app-page-header>
+
+  <!-- Create New Entry Collapsible Card -->
+  <div class="erp-card new-entry-box" *ngIf="showNewEntryForm()">
+    <div class="box-title">
+      <div class="title-with-badge">
+        <h3>{{ langService.translate('gl.newEntry') }}</h3>
+        <span class="mode-hint">{{ langService.isRtl() ? 'تسجيل قيد محاسبي مزدوج جديد' : 'New double-entry transaction' }}</span>
+      </div>
+      <div class="balance-status" [class.balanced]="isBalanced()" [class.unbalanced]="!isBalanced()">
+        <mat-icon>{{ isBalanced() ? 'check_circle' : 'warning' }}</mat-icon>
+        <span>
+          {{ isBalanced() 
+            ? (langService.isRtl() ? 'القيد متوازن (المدين = الدائن)' : 'Balanced') 
+            : (langService.isRtl() ? 'القيد غير متوازن! الفارق: ' + (difference() | number:'1.2-2') : 'Unbalanced! Diff: ' + (difference() | number:'1.2-2')) 
+          }}
+        </span>
+      </div>
+    </div>
+
+    <form [formGroup]="newEntryForm">
+      <div class="form-header-row">
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.translate('gl.date') }}</mat-label>
+          <input matInput type="date" formControlName="date">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="flex-grow-2">
+          <mat-label>{{ langService.translate('gl.description') }} *</mat-label>
+          <input matInput formControlName="description" placeholder="شرح القيد المحاسبي...">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>{{ langService.isRtl() ? 'رقم المرجع / المستند' : 'Reference Number' }}</mat-label>
+          <input matInput formControlName="referenceNumber" placeholder="مثال: REF-001">
+        </mat-form-field>
+      </div>
+
+      <!-- Lines Table -->
+      <div class="lines-container" formArrayName="lines">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 35%">{{ langService.translate('gl.accountName') }} *</th>
+              <th style="width: 25%">{{ langService.translate('gl.description') }}</th>
+              <th style="width: 15%" class="numeric-cell">{{ langService.translate('gl.debit') }}</th>
+              <th style="width: 15%" class="numeric-cell">{{ langService.translate('gl.credit') }}</th>
+              <th style="width: 10%"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let line of lines.controls; let i = index" [formGroupName]="i">
+              <td>
+                <select class="custom-select" formControlName="accountId">
+                  <option value="" disabled>{{ langService.isRtl() ? '-- اختر الحساب المالي --' : '-- Select Account --' }}</option>
+                  <option *ngFor="let acc of postingAccounts()" [value]="acc.id">
+                    {{ acc.accountCode }} - {{ langService.isRtl() ? acc.nameAr : acc.nameEn }}
+                  </option>
+                </select>
+              </td>
+              <td>
+                <input class="custom-input" formControlName="description" placeholder="شرح سطر القيد...">
+              </td>
+              <td>
+                <input class="custom-input numeric-cell" type="number" step="0.01" min="0" formControlName="debit" (input)="recalculateTotals()">
+              </td>
+              <td>
+                <input class="custom-input numeric-cell" type="number" step="0.01" min="0" formControlName="credit" (input)="recalculateTotals()">
+              </td>
+              <td class="action-cell">
+                <button mat-icon-button color="warn" type="button" (click)="removeLine(i)" [disabled]="lines.length <= 2" matTooltip="حذف السطر">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td colspan="2">
+                <button mat-button color="primary" type="button" (click)="addLine()">
+                  <mat-icon>add</mat-icon>
+                  <span>{{ langService.translate('gl.addLine') }}</span>
+                </button>
+              </td>
+              <td class="numeric-cell"><strong>{{ totalDebit() | number:'1.2-2' }}</strong></td>
+              <td class="numeric-cell"><strong>{{ totalCredit() | number:'1.2-2' }}</strong></td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="form-actions">
+        <button mat-button type="button" (click)="toggleNewEntry()">
+          {{ langService.translate('gl.cancel') }}
+        </button>
+
+        <!-- Save as Draft Button -->
+        <button 
+          mat-stroked-button 
+          color="primary" 
+          type="button" 
+          (click)="onSubmitNewEntry(false)" 
+          [disabled]="newEntryForm.invalid || !isBalanced() || isSubmitting()">
+          <mat-icon>save</mat-icon>
+          <span>{{ langService.isRtl() ? 'حفظ كمسودة' : 'Save Draft' }}</span>
+        </button>
+
+        <!-- Save & Post Button -->
+        <button 
+          mat-flat-button 
+          color="primary" 
+          type="button" 
+          (click)="onSubmitNewEntry(true)" 
+          [disabled]="newEntryForm.invalid || !isBalanced() || isSubmitting()">
+          <mat-spinner diameter="18" *ngIf="isSubmitting()"></mat-spinner>
+          <mat-icon *ngIf="!isSubmitting()">check_circle</mat-icon>
+          <span>{{ langService.isRtl() ? 'حفظ وترحيل فوراً' : 'Save & Post' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Search & Filter Toolbar -->
+  <div class="erp-card filter-toolbar">
+    <div class="toolbar-main-row">
+      <!-- Search Input -->
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input 
+          type="text" 
+          [value]="searchTerm()" 
+          (input)="onSearch($any($event.target).value)" 
+          [placeholder]="langService.isRtl() ? 'بحث برقم القيد، الوصف، أو رقم المرجع...' : 'Search by entry number, description...'" />
+      </div>
+
+      <!-- Status Chips -->
+      <div class="status-chips">
+        <button 
+          type="button" 
+          class="status-chip" 
+          [class.active]="selectedStatus() === undefined" 
+          (click)="setStatusFilter(undefined)">
+          {{ langService.isRtl() ? 'الكل' : 'All' }}
+        </button>
+        <button 
+          type="button" 
+          class="status-chip posted-chip" 
+          [class.active]="selectedStatus() === 2" 
+          (click)="setStatusFilter(2)">
+          <span class="dot"></span>
+          {{ langService.isRtl() ? 'المرحّلة' : 'Posted' }}
+        </button>
+        <button 
+          type="button" 
+          class="status-chip draft-chip" 
+          [class.active]="selectedStatus() === 1" 
+          (click)="setStatusFilter(1)">
+          <span class="dot"></span>
+          {{ langService.isRtl() ? 'المسودات' : 'Drafts' }}
+        </button>
+        <button 
+          type="button" 
+          class="status-chip reversed-chip" 
+          [class.active]="selectedStatus() === 3" 
+          (click)="setStatusFilter(3)">
+          <span class="dot"></span>
+          {{ langService.isRtl() ? 'المعكوسة' : 'Reversed' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Date Range Row -->
+    <div class="toolbar-date-row">
+      <div class="date-group">
+        <label>{{ langService.isRtl() ? 'من تاريخ:' : 'From:' }}</label>
+        <input type="date" [value]="fromDate()" (change)="fromDate.set($any($event.target).value); onDateFilter()" />
+      </div>
+      <div class="date-group">
+        <label>{{ langService.isRtl() ? 'إلى تاريخ:' : 'To:' }}</label>
+        <input type="date" [value]="toDate()" (change)="toDate.set($any($event.target).value); onDateFilter()" />
+      </div>
+      <button mat-button class="reset-btn" *ngIf="searchTerm() || selectedStatus() !== undefined || fromDate() || toDate()" (click)="resetFilters()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'إعادة ضبط' : 'Reset' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading-wrap">
+    <mat-spinner diameter="36"></mat-spinner>
+    <span>{{ langService.isRtl() ? 'جاري تحميل القيود اليومية...' : 'Loading entries...' }}</span>
+  </div>
+
+  <!-- Entries List Table -->
+  <div class="erp-card entries-table-box" *ngIf="!isLoading()">
+    <div class="table-responsive" *ngIf="entries().length > 0">
+      <table class="erp-data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px"></th>
+            <th>{{ langService.translate('gl.entryNumber') }}</th>
+            <th>{{ langService.translate('gl.date') }}</th>
+            <th>{{ langService.translate('gl.description') }}</th>
+            <th>{{ langService.translate('gl.reference') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.totalDebit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.totalCredit') }}</th>
+            <th>{{ langService.translate('gl.status') }}</th>
+            <th class="action-col">{{ langService.isRtl() ? 'الإجراءات' : 'Actions' }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let entry of entries()">
+            <!-- Main Row -->
+            <tr class="entry-row" [class.expanded-row]="expandedEntryId() === ('' + entry.id)" (click)="toggleExpandEntry(entry)">
+              <td class="expand-cell" (click)="$event.stopPropagation(); toggleExpandEntry(entry)">
+                <button mat-icon-button class="expand-btn">
+                  <mat-icon>{{ expandedEntryId() === ('' + entry.id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                </button>
+              </td>
+              <td>
+                <span class="mono-badge">{{ entry.entryNumber }}</span>
+              </td>
+              <td>{{ entry.date || entry.entryDate | date:'yyyy-MM-dd' }}</td>
+              <td>
+                <span class="entry-desc">{{ entry.description }}</span>
+                <span *ngIf="entry.isReversed" class="reversed-tag">{{ langService.isRtl() ? 'قيد تم عكسه' : 'Reversed' }}</span>
+              </td>
+              <td>{{ entry.referenceNumber || '-' }}</td>
+              <td class="numeric-cell font-mono">{{ entry.totalDebit | currencyFormat }}</td>
+              <td class="numeric-cell font-mono">{{ entry.totalCredit | currencyFormat }}</td>
+              <td>
+                <app-status-badge [status]="entry.statusName || entry.status"></app-status-badge>
+              </td>
+              <td class="action-col" (click)="$event.stopPropagation()">
+                <!-- Post Draft Action -->
+                <button 
+                  mat-stroked-button 
+                  color="primary" 
+                  class="action-sm-btn"
+                  *ngIf="entry.statusName === 'Draft' || entry.status === 'Draft' || entry.status === 1"
+                  (click)="postEntry(entry)"
+                  matTooltip="ترحيل القيد وتوليد رقم تسلسلي دائم">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>{{ langService.isRtl() ? 'ترحيل' : 'Post' }}</span>
+                </button>
+
+                <!-- Reverse Posted Entry Action -->
+                <button 
+                  mat-button 
+                  color="warn" 
+                  class="action-sm-btn"
+                  *ngIf="(entry.statusName === 'Posted' || entry.status === 'Posted' || entry.status === 2) && !entry.isReversed && entry.entryType !== 4 && entry.entryTypeName !== 'Reversal'"
+                  (click)="openReverseModal(entry)"
+                  matTooltip="عكس هذا القيد بقيد عكسي متوازن">
+                  <mat-icon>history</mat-icon>
+                  <span>{{ langService.isRtl() ? 'عكس القيد' : 'Reverse' }}</span>
+                </button>
+
+                <!-- View lines toggle -->
+                <button 
+                  mat-icon-button 
+                  class="view-lines-btn" 
+                  (click)="toggleExpandEntry(entry)" 
+                  matTooltip="عرض أطراف القيد">
+                  <mat-icon>receipt_long</mat-icon>
+                </button>
+              </td>
+            </tr>
+
+            <!-- Expanded Row with Lines Detail -->
+            <tr class="lines-detail-row" *ngIf="expandedEntryId() === ('' + entry.id)">
+              <td colspan="9" class="detail-container-cell">
+                <div class="lines-detail-box">
+                  <div class="detail-header">
+                    <h4>{{ langService.isRtl() ? 'أطراف وسطور القيد المحاسبي' : 'Journal Entry Lines' }} ({{ entry.entryNumber }})</h4>
+                    <span class="detail-summary">
+                      {{ langService.isRtl() ? 'إجمالي الحركة:' : 'Total Motion:' }} <strong>{{ entry.totalDebit | currencyFormat }}</strong>
+                    </span>
+                  </div>
+
+                  <div *ngIf="!entry.lines || entry.lines.length === 0" class="lines-loading">
+                    <mat-spinner diameter="24"></mat-spinner>
+                    <span>{{ langService.isRtl() ? 'جاري تحميل سطور القيد...' : 'Loading lines...' }}</span>
+                  </div>
+
+                  <table class="nested-lines-table" *ngIf="entry.lines && entry.lines.length > 0">
+                    <thead>
+                      <tr>
+                        <th style="width: 50px">#</th>
+                        <th style="width: 140px">{{ langService.isRtl() ? 'كود الحساب' : 'Account Code' }}</th>
+                        <th>{{ langService.isRtl() ? 'اسم الحساب' : 'Account Name' }}</th>
+                        <th>{{ langService.isRtl() ? 'شرح السطر' : 'Line Description' }}</th>
+                        <th class="numeric-cell" style="width: 140px">{{ langService.translate('gl.debit') }}</th>
+                        <th class="numeric-cell" style="width: 140px">{{ langService.translate('gl.credit') }}</th>
+                        <th style="width: 130px">{{ langService.isRtl() ? 'مركز التكلفة' : 'Cost Center' }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let line of entry.lines">
+                        <td>{{ line.lineNumber }}</td>
+                        <td><span class="mono-badge">{{ line.accountCode }}</span></td>
+                        <td><strong>{{ langService.isRtl() ? line.accountNameAr : line.accountNameEn }}</strong></td>
+                        <td class="text-muted">{{ line.description || '-' }}</td>
+                        <td class="numeric-cell font-mono">{{ line.debit > 0 ? (line.debit | currencyFormat) : '-' }}</td>
+                        <td class="numeric-cell font-mono">{{ line.credit > 0 ? (line.credit | currencyFormat) : '-' }}</td>
+                        <td>{{ line.costCenterName || '-' }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="pagination-footer" *ngIf="entries().length > 0">
+      <div class="pagination-info">
+        <span>{{ langService.isRtl() ? 'عرض' : 'Showing' }}</span>
+        <strong>{{ (pageNumber() - 1) * pageSize() + 1 }} - {{ (pageNumber() - 1) * pageSize() + entries().length }}</strong>
+        <span>{{ langService.isRtl() ? 'من أصل' : 'of' }}</span>
+        <strong>{{ totalCount() }}</strong>
+        <span>{{ langService.isRtl() ? 'قيد محاسبي' : 'entries' }}</span>
+      </div>
+
+      <div class="pagination-nav">
+        <button 
+          mat-button 
+          [disabled]="pageNumber() <= 1" 
+          (click)="goToPage(pageNumber() - 1)">
+          <mat-icon>{{ langService.isRtl() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+          <span>{{ langService.isRtl() ? 'السابق' : 'Previous' }}</span>
+        </button>
+
+        <span class="page-indicator">
+          {{ pageNumber() }} / {{ totalPages }}
+        </span>
+
+        <button 
+          mat-button 
+          [disabled]="pageNumber() >= totalPages" 
+          (click)="goToPage(pageNumber() + 1)">
+          <span>{{ langService.isRtl() ? 'التالي' : 'Next' }}</span>
+          <mat-icon>{{ langService.isRtl() ? 'chevron_left' : 'chevron_right' }}</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="entries().length === 0" class="empty-state">
+      <mat-icon>receipt_long</mat-icon>
+      <h3>{{ langService.isRtl() ? 'لا توجد قيود يومية مطابقة للبحث' : 'No Journal Entries Found' }}</h3>
+      <p>{{ langService.isRtl() ? 'جرّب تعديل خيارات البحث أو التصفية، أو ابدأ بإضافة قيد محاسبي جديد' : 'Try adjusting your search filters or create a new journal entry' }}</p>
+    </div>
+  </div>
+
+  <!-- Reversal Modal Dialog Overlay -->
+  <div class="modal-backdrop" *ngIf="showReverseModal()">
+    <div class="erp-modal-box">
+      <div class="modal-header">
+        <div class="modal-title">
+          <mat-icon color="warn">history</mat-icon>
+          <h3>{{ langService.isRtl() ? 'عكس القيد المحاسبي' : 'Reverse Journal Entry' }}</h3>
+        </div>
+        <button mat-icon-button (click)="closeReverseModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body" *ngIf="entryToReverse()">
+        <p class="modal-warning">
+          {{ langService.isRtl() 
+            ? 'سيتم إنشاء قيد محاسبي عكسي تلقائي تنعكس فيه أطراف القيد (المدين يصبح دائن والعكس) مع توليد رقم تسلسلي معتمد.' 
+            : 'An automatic inverted reversal entry will be generated to balance out this entry.' 
+          }}
+        </p>
+
+        <div class="entry-quick-info">
+          <div><span>{{ langService.translate('gl.entryNumber') }}:</span> <strong>{{ entryToReverse()!.entryNumber }}</strong></div>
+          <div><span>{{ langService.translate('gl.date') }}:</span> <strong>{{ entryToReverse()!.date || entryToReverse()!.entryDate | date:'yyyy-MM-dd' }}</strong></div>
+          <div><span>{{ langService.isRtl() ? 'المبلغ:' : 'Amount:' }}</span> <strong>{{ entryToReverse()!.totalDebit | currencyFormat }}</strong></div>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-100">
+          <mat-label>{{ langService.isRtl() ? 'سبب عكس القيد *' : 'Reason for Reversal *' }}</mat-label>
+          <textarea 
+            matInput 
+            rows="3" 
+            [value]="reverseReason()" 
+            (input)="reverseReason.set($any($event.target).value)" 
+            placeholder="يرجى كتابة سبب العكس بالتفصيل (مثل: إلغاء العملية، خطأ في الحساب، ...)">
+          </textarea>
+        </mat-form-field>
+      </div>
+
+      <div class="modal-actions">
+        <button mat-button (click)="closeReverseModal()">
+          {{ langService.translate('gl.cancel') }}
+        </button>
+        <button 
+          mat-flat-button 
+          color="warn" 
+          [disabled]="!reverseReason() || reverseReason().trim().length < 3 || isReversing()" 
+          (click)="confirmReverse()">
+          <mat-spinner diameter="18" *ngIf="isReversing()"></mat-spinner>
+          <mat-icon *ngIf="!isReversing()">history</mat-icon>
+          <span>{{ langService.isRtl() ? 'تأكيد عكس القيد' : 'Confirm Reversal' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

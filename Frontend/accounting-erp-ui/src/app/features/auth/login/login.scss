@@ -1,0 +1,143 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  padding: 20px;
+}
+
+.login-card-container {
+  width: 100%;
+  max-width: 440px;
+}
+
+.login-header {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #ffffff;
+
+  .brand-avatar {
+    width: 64px;
+    height: 64px;
+    background: #2563eb;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+
+    mat-icon {
+      font-size: 36px;
+      height: 36px;
+      width: 36px;
+      color: #ffffff;
+    }
+  }
+
+  .brand-name {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .brand-sub {
+    font-size: 0.875rem;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+}
+
+.login-card {
+  border-radius: 16px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  padding: 8px;
+}
+
+.login-card-title {
+  margin-bottom: 20px;
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+    color: #0f172a;
+  }
+  p {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin: 4px 0 0 0;
+  }
+}
+
+.error-banner {
+  background-color: #fee2e2;
+  border: 1px solid #f87171;
+  color: #b91c1c;
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+
+  mat-icon {
+    font-size: 20px;
+    height: 20px;
+    width: 20px;
+  }
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .w-full {
+    width: 100%;
+  }
+
+  .submit-btn {
+    height: 48px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+}
+
+.demo-credentials-box {
+  margin-top: 20px;
+  padding: 12px;
+  background-color: #f1f5f9;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #475569;
+
+  .demo-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    margin-bottom: 4px;
+
+    mat-icon {
+      font-size: 16px;
+      height: 16px;
+      width: 16px;
+      color: #3b82f6;
+    }
+  }
+
+  .credentials-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+}

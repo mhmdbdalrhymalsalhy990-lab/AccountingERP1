@@ -1,0 +1,66 @@
+<div class="erp-container">
+  <app-page-header 
+    [title]="langService.translate('nav.purchaseInvoices')" 
+    [subtitle]="langService.isRtl() ? 'إدارة فواتير المشتريات وإثبات قيود المخزون والضريبة' : 'Manage Purchase Invoices & Automated Inventory GL Entries'">
+    <button mat-stroked-button (click)="loadInvoices()">
+      <mat-icon>refresh</mat-icon>
+      <span>{{ langService.isRtl() ? 'تحديث' : 'Refresh' }}</span>
+    </button>
+  </app-page-header>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ langService.translate('commercial.invoiceNumber') }}</th>
+            <th>{{ langService.translate('gl.date') }}</th>
+            <th>{{ langService.translate('commercial.supplier') }}</th>
+            <th class="numeric-cell">{{ langService.translate('commercial.totalAmount') }}</th>
+            <th class="numeric-cell">{{ langService.translate('commercial.taxAmount') }}</th>
+            <th class="numeric-cell">{{ langService.translate('commercial.netAmount') }}</th>
+            <th>{{ langService.translate('gl.status') }}</th>
+            <th>{{ langService.translate('common.actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let inv of invoices()">
+            <td><strong>{{ inv.invoiceNumber }}</strong></td>
+            <td>{{ inv.invoiceDate | date:'yyyy-MM-dd' }}</td>
+            <td>{{ langService.isRtl() ? (inv.supplierNameAr || 'مورد رئيسي') : (inv.supplierNameEn || 'Main Supplier') }}</td>
+            <td class="numeric-cell">{{ inv.subTotal | number:'1.2-2' }}</td>
+            <td class="numeric-cell">{{ inv.taxAmount | number:'1.2-2' }}</td>
+            <td class="numeric-cell"><strong>{{ inv.totalAmount | currencyFormat:'SAR' }}</strong></td>
+            <td>
+              <app-status-badge [variant]="inv.status === 'Posted' ? 'posted' : 'draft'">
+                {{ inv.status === 'Posted' ? langService.translate('gl.posted') : langService.translate('gl.draft') }}
+              </app-status-badge>
+            </td>
+            <td>
+              <button 
+                *ngIf="inv.status !== 'Posted'" 
+                mat-stroked-button 
+                color="primary" 
+                class="action-btn"
+                (click)="postInvoice(inv)">
+                <mat-icon>send</mat-icon>
+                <span>{{ langService.translate('gl.post') }}</span>
+              </button>
+              <span *ngIf="inv.status === 'Posted'" class="posted-status">
+                <mat-icon>check</mat-icon>
+                <span>{{ langService.isRtl() ? 'مرحل' : 'Posted' }}</span>
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="invoices().length === 0">
+            <td colspan="8" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

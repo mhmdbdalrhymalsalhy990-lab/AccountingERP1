@@ -1,0 +1,210 @@
+<div class="layout-wrapper" [class.rtl-layout]="langService.isRtl()" [class.ltr-layout]="!langService.isRtl()">
+  <!-- Top Navigation Toolbar -->
+  <mat-toolbar color="primary" class="main-toolbar">
+    <button mat-icon-button (click)="toggleSidenav()" aria-label="Toggle Navigation" class="menu-toggle-btn">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <div class="brand">
+      <div class="brand-logo-circle">
+        <mat-icon class="brand-icon">account_balance</mat-icon>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">{{ langService.translate('app.title') }}</span>
+        <span class="brand-badge">Enterprise</span>
+      </div>
+    </div>
+
+    <span class="toolbar-spacer"></span>
+
+    <!-- Company Switcher -->
+    <div class="company-selector" *ngIf="tenantService.companies().length > 0">
+      <mat-icon class="company-icon">corporate_fare</mat-icon>
+      <select 
+        class="custom-company-select"
+        [value]="tenantService.selectedCompanyId() || ''" 
+        (change)="onCompanyChange($any($event.target).value)">
+        <option *ngFor="let c of tenantService.companies()" [value]="c.id">
+          {{ langService.isRtl() ? c.nameAr : c.nameEn }}
+        </option>
+      </select>
+    </div>
+
+    <!-- Language Toggle -->
+    <button mat-button class="lang-toggle-btn" (click)="toggleLanguage()">
+      <mat-icon>translate</mat-icon>
+      <span>{{ langService.isRtl() ? 'English' : 'العربية' }}</span>
+    </button>
+
+    <!-- User Profile & Logout -->
+    <div class="user-menu">
+      <button mat-button [matMenuTriggerFor]="userDropdown" class="user-btn">
+        <div class="user-avatar-badge">
+          <mat-icon>person</mat-icon>
+        </div>
+        <div class="user-info-text">
+          <span class="username">{{ authService.currentUser()?.fullName || authService.currentUser()?.userName || 'المستخدم' }}</span>
+          <span class="user-subrole">{{ authService.currentUser()?.roles?.[0] || 'Admin' }}</span>
+        </div>
+        <mat-icon class="dropdown-chevron">expand_more</mat-icon>
+      </button>
+      <mat-menu #userDropdown="matMenu" class="user-dropdown-panel">
+        <div class="user-dropdown-header">
+          <div class="user-fullname">{{ authService.currentUser()?.fullName }}</div>
+          <div class="user-role-chip">{{ authService.currentUser()?.roles?.[0] || 'Admin' }}</div>
+          <div class="user-email-text">{{ authService.currentUser()?.email }}</div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item routerLink="/users-permissions">
+          <mat-icon color="primary">admin_panel_settings</mat-icon>
+          <span>{{ langService.translate('nav.usersPermissions') }}</span>
+        </button>
+        <button mat-menu-item routerLink="/system-settings">
+          <mat-icon color="accent">tune</mat-icon>
+          <span>{{ langService.translate('nav.systemSettings') }}</span>
+        </button>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()" class="logout-menu-item">
+          <mat-icon color="warn">logout</mat-icon>
+          <span>{{ langService.translate('nav.logout') }}</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-toolbar>
+
+  <!-- Sidenav & Content Container -->
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav [opened]="isSidenavOpen" mode="side" class="main-sidenav">
+      <mat-nav-list class="nav-list">
+        <!-- Section: General -->
+        <div class="nav-section-label">
+          <span>{{ langService.translate('nav.section.general') }}</span>
+        </div>
+
+        <!-- Dashboard -->
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active-nav-link" [routerLinkActiveOptions]="{exact: true}">
+          <mat-icon matListItemIcon class="nav-icon dash-icon">space_dashboard</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.dashboard') }}</span>
+        </a>
+
+        <!-- Section: Finance -->
+        <div class="nav-section-label">
+          <span>{{ langService.translate('nav.section.finance') }}</span>
+        </div>
+
+        <!-- Chart of Accounts -->
+        <a mat-list-item routerLink="/accounts" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">account_tree</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.chartOfAccounts') }}</span>
+        </a>
+
+        <!-- Journal Entries -->
+        <a mat-list-item routerLink="/journal-entries" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">receipt_long</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.journalEntries') }}</span>
+        </a>
+
+        <!-- General Ledger -->
+        <a mat-list-item routerLink="/general-ledger" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">menu_book</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.generalLedger') }}</span>
+        </a>
+
+        <!-- Trial Balance -->
+        <a mat-list-item routerLink="/reports/trial-balance" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">balance</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.trialBalance') }}</span>
+        </a>
+
+        <!-- Section: Commercial -->
+        <div class="nav-section-label">
+          <span>{{ langService.translate('nav.section.commercial') }}</span>
+        </div>
+
+        <!-- Customers -->
+        <a mat-list-item routerLink="/customers" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">people_alt</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.customers') }}</span>
+        </a>
+
+        <!-- Suppliers -->
+        <a mat-list-item routerLink="/suppliers" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">local_shipping</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.suppliers') }}</span>
+        </a>
+
+        <!-- Sales Invoices -->
+        <a mat-list-item routerLink="/sales-invoices" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">point_of_sale</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.salesInvoices') }}</span>
+        </a>
+
+        <!-- Purchase Invoices -->
+        <a mat-list-item routerLink="/purchase-invoices" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">shopping_cart</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.purchaseInvoices') }}</span>
+        </a>
+
+        <!-- Section: Inventory & Assets -->
+        <div class="nav-section-label">
+          <span>{{ langService.translate('nav.section.inventoryAssets') }}</span>
+        </div>
+
+        <!-- Inventory -->
+        <a mat-list-item routerLink="/inventory" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">inventory_2</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.inventory') }}</span>
+        </a>
+
+        <!-- Banking & Treasury -->
+        <a mat-list-item routerLink="/banking" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">account_balance</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.banking') }}</span>
+        </a>
+
+        <!-- Fixed Assets -->
+        <a mat-list-item routerLink="/fixed-assets" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">domain</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.fixedAssets') }}</span>
+        </a>
+
+        <!-- Section: Reports & Administration -->
+        <div class="nav-section-label">
+          <span>{{ langService.translate('nav.section.admin') }}</span>
+        </div>
+
+        <!-- Financial Reports -->
+        <a mat-list-item routerLink="/reports/financial-statements" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">analytics</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.financialReports') }}</span>
+        </a>
+
+        <!-- Users & Permissions -->
+        <a mat-list-item routerLink="/users-permissions" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">admin_panel_settings</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.usersPermissions') }}</span>
+        </a>
+
+        <!-- System Settings -->
+        <a mat-list-item routerLink="/system-settings" routerLinkActive="active-nav-link">
+          <mat-icon matListItemIcon class="nav-icon">settings</mat-icon>
+          <span matListItemTitle>{{ langService.translate('nav.systemSettings') }}</span>
+        </a>
+      </mat-nav-list>
+
+      <div class="sidenav-footer">
+        <div class="system-status">
+          <span class="status-dot"></span>
+          <span>{{ langService.isRtl() ? 'النظام متصل ونشط' : 'System Connected' }}</span>
+        </div>
+        <div class="system-version">Accounting ERP Enterprise</div>
+        <div class="system-engine">.NET 10 & Angular 21+</div>
+      </div>
+    </mat-sidenav>
+
+    <!-- Main Router Outlet Area -->
+    <mat-sidenav-content class="main-content">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

@@ -1,0 +1,136 @@
+<div class="print-page-wrapper">
+  <!-- Actions Bar (Hidden during print) -->
+  <div class="no-print print-toolbar">
+    <button mat-button routerLink="/sales-invoices">
+      <mat-icon>arrow_back</mat-icon>
+      <span>{{ langService.isRtl() ? 'العودة للفواتير' : 'Back to Invoices' }}</span>
+    </button>
+    <div class="toolbar-spacer"></div>
+    <button mat-flat-button color="primary" (click)="printInvoice()">
+      <mat-icon>print</mat-icon>
+      <span>{{ langService.isRtl() ? 'طباعة / تصدير PDF' : 'Print / Export PDF' }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="isLoading()" class="loading-wrap no-print">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- A4 Printable Invoice Sheet -->
+  <div class="invoice-sheet" *ngIf="!isLoading() && invoice()">
+    <!-- Header -->
+    <div class="invoice-header">
+      <div class="seller-info">
+        <h1 class="company-name">{{ invoice()?.sellerNameAr }}</h1>
+        <h2 class="company-name-en">{{ invoice()?.sellerNameEn }}</h2>
+        <div class="info-row">
+          <span>الرقم الضريبي (VAT):</span>
+          <strong>{{ invoice()?.sellerVatNumber }}</strong>
+        </div>
+        <div class="info-row" *ngIf="invoice()?.sellerCrNumber">
+          <span>السجل التجاري (CR):</span>
+          <span>{{ invoice()?.sellerCrNumber }}</span>
+        </div>
+        <div class="info-row" *ngIf="invoice()?.sellerAddress">
+          <span>العنوان:</span>
+          <span>{{ invoice()?.sellerAddress }}</span>
+        </div>
+      </div>
+
+      <div class="invoice-meta-box">
+        <div class="invoice-badge">فاتورة ضريبية<br><small>TAX INVOICE</small></div>
+        <div class="meta-row">
+          <span>رقم الفاتورة:</span>
+          <strong>{{ invoice()?.invoiceNumber }}</strong>
+        </div>
+        <div class="meta-row">
+          <span>تاريخ الإصدار:</span>
+          <span>{{ invoice()?.invoiceDate | date:'yyyy-MM-dd' }}</span>
+        </div>
+        <div class="meta-row" *ngIf="invoice()?.dueDate">
+          <span>تاريخ الاستحقاق:</span>
+          <span>{{ invoice()?.dueDate | date:'yyyy-MM-dd' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Buyer Details -->
+    <div class="buyer-section">
+      <div class="section-title">بيانات العميل / المشتري (Customer Details)</div>
+      <div class="buyer-grid">
+        <div class="buyer-info-col">
+          <div><strong>الاسم:</strong> {{ invoice()?.buyerNameAr }} ({{ invoice()?.buyerNameEn }})</div>
+          <div><strong>الرقم الضريبي:</strong> {{ invoice()?.buyerVatNumber || 'غير متوفر' }}</div>
+        </div>
+        <div class="buyer-info-col">
+          <div><strong>العنوان:</strong> {{ invoice()?.buyerAddress || 'المملكة العربية السعودية' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Items Table -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>وصف السلعة أو الخدمة<br><small>Description</small></th>
+          <th class="numeric-cell">الكمية<br><small>Qty</small></th>
+          <th class="numeric-cell">سعر الوحدة<br><small>Unit Price</small></th>
+          <th class="numeric-cell">الضريبة (15%)<br><small>VAT</small></th>
+          <th class="numeric-cell">المجموع شامل الضريبة<br><small>Total (Incl. VAT)</small></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of invoice()?.items">
+          <td>{{ item.lineNumber }}</td>
+          <td>
+            <strong>{{ item.itemNameAr }}</strong>
+            <div class="item-en">{{ item.itemNameEn }}</div>
+          </td>
+          <td class="numeric-cell">{{ item.quantity }} {{ item.unitName }}</td>
+          <td class="numeric-cell">{{ item.unitPrice | number:'1.2-2' }}</td>
+          <td class="numeric-cell">{{ item.taxAmount | number:'1.2-2' }}</td>
+          <td class="numeric-cell"><strong>{{ item.netTotal | number:'1.2-2' }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Totals and ZATCA QR Code -->
+    <div class="bottom-section">
+      <div class="zatca-qr-container">
+        <div class="qr-box">
+          <!-- ZATCA Phase 1 / Phase 2 Base64 QR Code visual representation -->
+          <div class="qr-code-graphic">
+            <mat-icon class="qr-icon">qr_code_2</mat-icon>
+          </div>
+          <div class="qr-caption">رمز الاستجابة السريع المعتمد من هيئة الزكاة والضريبة والجمارك (ZATCA e-Invoice)</div>
+        </div>
+      </div>
+
+      <div class="totals-table-wrapper">
+        <table class="totals-table">
+          <tr>
+            <td>الإجمالي قبل الضريبة (Excl. VAT):</td>
+            <td class="numeric-cell">{{ invoice()?.subTotal | number:'1.2-2' }} {{ invoice()?.currencyCode }}</td>
+          </tr>
+          <tr>
+            <td>مبلغ ضريبة القيمة المضافة (15% VAT):</td>
+            <td class="numeric-cell">{{ invoice()?.taxAmount | number:'1.2-2' }} {{ invoice()?.currencyCode }}</td>
+          </tr>
+          <tr class="grand-total-row">
+            <td><strong>المجموع الإجمالي النهائي (Total):</strong></td>
+            <td class="numeric-cell"><strong>{{ invoice()?.totalAmount | number:'1.2-2' }} {{ invoice()?.currencyCode }}</strong></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="invoice-footer">
+      <div>تم إصدار هذه الفاتورة الإلكترونية عبر نظام تخطيط موارد المؤسسات المحاسبي المعتمد.</div>
+      <div>Thank you for your business.</div>
+    </div>
+  </div>
+</div>

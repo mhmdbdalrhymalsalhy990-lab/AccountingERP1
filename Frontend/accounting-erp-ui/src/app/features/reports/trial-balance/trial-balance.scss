@@ -1,0 +1,62 @@
+.report-filters {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  .date-inputs {
+    display: flex;
+    gap: 12px;
+  }
+}
+
+.balance-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+
+  &.balanced {
+    background-color: #dcfce7;
+    color: #15803d;
+  }
+
+  &.unbalanced {
+    background-color: #fee2e2;
+    color: #b91c1c;
+  }
+}
+
+.header-group {
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+  background-color: #e2e8f0 !important;
+}
+
+.sub-header-row th {
+  font-size: 0.75rem;
+  background-color: #f1f5f9;
+}
+
+.grand-totals-row {
+  background-color: #f1f5f9;
+  border-top: 2px solid #334155;
+  font-size: 0.9rem;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.no-data-cell {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px;
+}

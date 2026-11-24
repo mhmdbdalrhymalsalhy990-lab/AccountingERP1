@@ -1,0 +1,115 @@
+<div class="erp-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.dashboard') }}</h1>
+      <p>{{ tenantService.currentCompany()?.nameAr || 'نظام إدارة الحسابات المالية العامة' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-flat-button color="primary" routerLink="/journal-entries">
+        <mat-icon>add</mat-icon>
+        <span>{{ langService.translate('gl.newEntry') }}</span>
+      </button>
+      <button mat-stroked-button routerLink="/reports/trial-balance">
+        <mat-icon>assessment</mat-icon>
+        <span>{{ langService.translate('nav.trialBalance') }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- KPI Cards Grid -->
+  <div class="kpi-grid">
+    <!-- Revenue -->
+    <div class="kpi-card revenue">
+      <div class="kpi-icon-wrap">
+        <mat-icon>trending_up</mat-icon>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-title">{{ langService.translate('dashboard.totalRevenue') }}</span>
+        <span class="kpi-value">{{ metrics().totalRevenue | number:'1.2-2' }} <small>SAR</small></span>
+      </div>
+    </div>
+
+    <!-- Expenses -->
+    <div class="kpi-card expenses">
+      <div class="kpi-icon-wrap">
+        <mat-icon>trending_down</mat-icon>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-title">{{ langService.translate('dashboard.totalExpenses') }}</span>
+        <span class="kpi-value">{{ metrics().totalExpenses | number:'1.2-2' }} <small>SAR</small></span>
+      </div>
+    </div>
+
+    <!-- Net Profit -->
+    <div class="kpi-card profit">
+      <div class="kpi-icon-wrap">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-title">{{ langService.translate('dashboard.netProfit') }}</span>
+        <span class="kpi-value">{{ metrics().netProfit | number:'1.2-2' }} <small>SAR</small></span>
+      </div>
+    </div>
+
+    <!-- Cash & Bank -->
+    <div class="kpi-card cash">
+      <div class="kpi-icon-wrap">
+        <mat-icon>account_balance_wallet</mat-icon>
+      </div>
+      <div class="kpi-details">
+        <span class="kpi-title">{{ langService.translate('dashboard.cashBalance') }}</span>
+        <span class="kpi-value">{{ metrics().cashAndBankBalance | number:'1.2-2' }} <small>SAR</small></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Entries Table -->
+  <div class="erp-card table-section">
+    <div class="section-title">
+      <h2>{{ langService.translate('dashboard.recentEntries') }}</h2>
+      <a mat-button color="primary" routerLink="/journal-entries">
+        {{ langService.isRtl() ? 'عرض كافة القيود' : 'View All Entries' }}
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ langService.translate('gl.entryNumber') }}</th>
+            <th>{{ langService.translate('gl.date') }}</th>
+            <th>{{ langService.translate('gl.description') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.debit') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.credit') }}</th>
+            <th>{{ langService.translate('gl.status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let entry of recentEntries()">
+            <td><strong>{{ entry.entryNumber }}</strong></td>
+            <td>{{ entry.date | date:'yyyy-MM-dd' }}</td>
+            <td>{{ entry.description }}</td>
+            <td class="numeric-cell">{{ entry.totalDebit | number:'1.2-2' }}</td>
+            <td class="numeric-cell">{{ entry.totalCredit | number:'1.2-2' }}</td>
+            <td>
+              <span class="status-badge" [class.posted]="entry.status === 'Posted'" [class.draft]="entry.status !== 'Posted'">
+                {{ entry.status === 'Posted' ? langService.translate('gl.posted') : langService.translate('gl.draft') }}
+              </span>
+            </td>
+          </tr>
+          <tr *ngIf="recentEntries().length === 0">
+            <td colspan="6" class="no-data-cell">
+              {{ langService.translate('common.noData') }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

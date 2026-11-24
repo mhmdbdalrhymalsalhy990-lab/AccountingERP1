@@ -1,0 +1,7 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/TestResults
+accounting-erp-ui/node_modules
+accounting-erp-ui/dist

@@ -1,0 +1,56 @@
+.filter-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 20px;
+
+  .account-select {
+    min-width: 300px;
+    flex: 1;
+  }
+}
+
+.account-statement-block {
+  margin-bottom: 30px;
+
+  .statement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f1f5f9;
+    padding: 12px 16px;
+    border-radius: 8px 8px 0 0;
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+
+    h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .opening-balance-badge {
+      font-size: 0.9rem;
+      color: #334155;
+    }
+  }
+}
+
+.totals-row {
+  background-color: #f8fafc;
+  font-weight: 700;
+  border-top: 2px solid #334155;
+}
+
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40px;
+}
+
+.no-data-cell {
+  text-align: center;
+  color: var(--text-secondary);
+  padding: 24px;
+}

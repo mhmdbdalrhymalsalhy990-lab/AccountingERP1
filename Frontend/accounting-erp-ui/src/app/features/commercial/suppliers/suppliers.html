@@ -1,0 +1,81 @@
+<div class="erp-container">
+  <app-page-header 
+    [title]="langService.translate('nav.suppliers')" 
+    [subtitle]="langService.isRtl() ? 'إدارة سجلات الموردين وحسابات الذمم الدائنة' : 'Manage Supplier Records & Accounts Payable'">
+    <button mat-flat-button color="primary" (click)="toggleForm()">
+      <mat-icon>{{ showForm() ? 'close' : 'add' }}</mat-icon>
+      <span>{{ showForm() ? langService.translate('gl.cancel') : langService.translate('commercial.newSupplier') }}</span>
+    </button>
+  </app-page-header>
+
+  <div class="erp-card" *ngIf="showForm()">
+    <h3>{{ langService.translate('commercial.newSupplier') }}</h3>
+    <form [formGroup]="supplierForm" (ngSubmit)="saveSupplier()" class="form-grid">
+      <mat-form-field appearance="outline">
+        <mat-label>رمز المورد</mat-label>
+        <input matInput formControlName="code" placeholder="SUPP-001">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>الاسم بالعربية</mat-label>
+        <input matInput formControlName="nameAr" placeholder="شركة التوريدات العالمية">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>الاسم بالإنجليزية</mat-label>
+        <input matInput formControlName="nameEn" placeholder="Global Supplies Corp">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ langService.translate('commercial.taxNumber') }}</mat-label>
+        <input matInput formControlName="taxNumber" placeholder="300000000000003">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ langService.translate('commercial.phone') }}</mat-label>
+        <input matInput formControlName="phone" placeholder="0500000000">
+      </mat-form-field>
+
+      <div class="form-buttons">
+        <button mat-flat-button color="primary" type="submit" [disabled]="supplierForm.invalid">
+          {{ langService.translate('gl.save') }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="erp-card">
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div class="erp-table-container" *ngIf="!isLoading()">
+      <table>
+        <thead>
+          <tr>
+            <th>الرمز</th>
+            <th>{{ langService.translate('commercial.supplier') }}</th>
+            <th>{{ langService.translate('commercial.taxNumber') }}</th>
+            <th>{{ langService.translate('commercial.phone') }}</th>
+            <th class="numeric-cell">{{ langService.translate('gl.balance') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of suppliers()">
+            <td><code>{{ s.code }}</code></td>
+            <td>
+              <strong>{{ langService.isRtl() ? s.nameAr : s.nameEn }}</strong>
+              <div class="alt-name">{{ langService.isRtl() ? s.nameEn : s.nameAr }}</div>
+            </td>
+            <td>{{ s.taxNumber || '-' }}</td>
+            <td>{{ s.phone || '-' }}</td>
+            <td class="numeric-cell"><strong>{{ s.currentBalance | number:'1.2-2' }}</strong></td>
+          </tr>
+          <tr *ngIf="suppliers().length === 0">
+            <td colspan="5" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

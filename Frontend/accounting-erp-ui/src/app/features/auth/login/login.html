@@ -1,0 +1,62 @@
+<div class="login-page" [class.rtl-layout]="langService.isRtl()" [class.ltr-layout]="!langService.isRtl()">
+  <div class="login-card-container">
+    <div class="login-header">
+      <div class="brand-avatar">
+        <mat-icon>account_balance</mat-icon>
+      </div>
+      <h1 class="brand-name">{{ langService.translate('app.title') }}</h1>
+      <p class="brand-sub">{{ langService.translate('app.subtitle') }}</p>
+    </div>
+
+    <mat-card class="erp-card login-card">
+      <mat-card-content>
+        <div class="login-card-title">
+          <h2>{{ langService.isRtl() ? 'تسجيل الدخول إلى النظام' : 'Sign in to System' }}</h2>
+          <p>{{ langService.isRtl() ? 'أدخل بيانات الاعتماد للمتابعة' : 'Enter your credentials to continue' }}</p>
+        </div>
+
+        <div class="error-banner" *ngIf="errorMessage()">
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ errorMessage() }}</span>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>{{ langService.isRtl() ? 'اسم المستخدم أو البريد الإلكتروني' : 'Username or Email' }}</mat-label>
+            <input matInput type="text" formControlName="email" placeholder="admin / admin@erp.com">
+            <mat-icon matPrefix>person</mat-icon>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>{{ langService.isRtl() ? 'كلمة المرور' : 'Password' }}</mat-label>
+            <input matInput type="password" formControlName="password" placeholder="••••••••">
+            <mat-icon matPrefix>lock</mat-icon>
+          </mat-form-field>
+
+          <button 
+            mat-flat-button 
+            color="primary" 
+            type="submit" 
+            class="submit-btn" 
+            [disabled]="loginForm.invalid || isLoading()">
+            <mat-spinner diameter="20" *ngIf="isLoading()"></mat-spinner>
+            <span *ngIf="!isLoading()">{{ langService.isRtl() ? 'دخول للنظام' : 'Sign In' }}</span>
+          </button>
+        </form>
+
+        <div class="demo-credentials-box">
+          <div class="demo-title">
+            <mat-icon>info</mat-icon>
+            <span>{{ langService.isRtl() ? 'حساب تجريبي للاختبار (Admin):' : 'Demo Test Account (Admin):' }}</span>
+          </div>
+          <div class="credentials-text">
+            <span>admin&#64;erp.com (أو admin) / Admin&#64;123456</span>
+            <button mat-button color="accent" (click)="fillAdminCredentials()">
+              {{ langService.isRtl() ? 'تعبئة تلقائية' : 'Auto Fill' }}
+            </button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

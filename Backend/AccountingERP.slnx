@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AccountingERP.API/AccountingERP.API.csproj" />
+    <Project Path="src/AccountingERP.Application/AccountingERP.Application.csproj" />
+    <Project Path="src/AccountingERP.Domain/AccountingERP.Domain.csproj" />
+    <Project Path="src/AccountingERP.Infrastructure/AccountingERP.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AccountingERP.IntegrationTests/AccountingERP.IntegrationTests.csproj" />
+    <Project Path="tests/AccountingERP.UnitTests/AccountingERP.UnitTests.csproj" />
+  </Folder>
+</Solution>

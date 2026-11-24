@@ -1,0 +1,93 @@
+<div class="erp-container">
+  <div class="page-header">
+    <div>
+      <h1>{{ langService.translate('nav.generalLedger') }}</h1>
+      <p>{{ langService.isRtl() ? 'كشف حساب الأستاذ العام وتتبع الرصيد التراكمي' : 'General Ledger Account Statement & Running Balance' }}</p>
+    </div>
+    <div class="header-actions">
+      <button mat-stroked-button color="accent" (click)="exportToExcel()" [disabled]="!report()">
+        <mat-icon>file_download</mat-icon>
+        <span>{{ langService.isRtl() ? 'تصدير إكسل (Excel)' : 'Export Excel' }}</span>
+      </button>
+      <button mat-flat-button color="primary" (click)="loadStatement()">
+        <mat-icon>refresh</mat-icon>
+        <span>{{ langService.isRtl() ? 'عرض الكشف' : 'Generate' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="erp-card">
+    <div class="filter-row">
+      <mat-form-field appearance="outline" class="account-select">
+        <mat-label>{{ langService.translate('gl.accountName') }}</mat-label>
+        <select matNativeControl [ngModel]="selectedAccountId()" (ngModelChange)="selectedAccountId.set($event)">
+          <option *ngFor="let acc of accounts()" [value]="acc.id">
+            {{ acc.code }} - {{ langService.isRtl() ? acc.nameAr : acc.nameEn }}
+          </option>
+        </select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ langService.isRtl() ? 'من تاريخ' : 'From Date' }}</mat-label>
+        <input matInput type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ langService.isRtl() ? 'إلى تاريخ' : 'To Date' }}</mat-label>
+        <input matInput type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)">
+      </mat-form-field>
+    </div>
+
+    <div *ngIf="isLoading()" class="loading-wrap">
+      <mat-spinner diameter="36"></mat-spinner>
+    </div>
+
+    <div *ngIf="!isLoading() && report()">
+      <div *ngFor="let acc of report()?.accounts" class="account-statement-block">
+        <div class="statement-header">
+          <h3>{{ acc.accountCode }} - {{ langService.isRtl() ? acc.accountNameAr : acc.accountNameEn }}</h3>
+          <div class="opening-balance-badge">
+            {{ langService.isRtl() ? 'الرصيد الافتتاحي: ' : 'Opening Balance: ' }}
+            <strong>{{ acc.openingBalance | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="erp-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>{{ langService.translate('gl.date') }}</th>
+                <th>{{ langService.translate('gl.entryNumber') }}</th>
+                <th>{{ langService.translate('gl.description') }}</th>
+                <th class="numeric-cell">{{ langService.translate('gl.debit') }}</th>
+                <th class="numeric-cell">{{ langService.translate('gl.credit') }}</th>
+                <th class="numeric-cell">{{ langService.isRtl() ? 'الرصيد المتحرك' : 'Running Balance' }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let line of acc.lines">
+                <td>{{ line.date | date:'yyyy-MM-dd' }}</td>
+                <td><code>{{ line.entryNumber }}</code></td>
+                <td>{{ line.description }}</td>
+                <td class="numeric-cell">{{ line.debit | number:'1.2-2' }}</td>
+                <td class="numeric-cell">{{ line.credit | number:'1.2-2' }}</td>
+                <td class="numeric-cell"><strong>{{ line.runningBalance | number:'1.2-2' }}</strong></td>
+              </tr>
+              <tr *ngIf="acc.lines.length === 0">
+                <td colspan="6" class="no-data-cell">{{ langService.translate('common.noData') }}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="totals-row">
+                <td colspan="3"><strong>{{ langService.isRtl() ? 'المجاميع ورصيد الإغلاق' : 'Totals & Closing Balance' }}</strong></td>
+                <td class="numeric-cell"><strong>{{ acc.totalDebit | number:'1.2-2' }}</strong></td>
+                <td class="numeric-cell"><strong>{{ acc.totalCredit | number:'1.2-2' }}</strong></td>
+                <td class="numeric-cell"><strong>{{ acc.closingBalance | number:'1.2-2' }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
